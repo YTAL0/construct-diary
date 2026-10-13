@@ -5,6 +5,10 @@ import { WelcomeScreen } from './src/views/WelcomeScreen';
 import { LoginScreen } from './src/views/LoginScreen';
 import { RegisterScreen } from './src/views/RegisterScreen';
 import { HomeScreen } from './src/views/HomeScreen';
+import { NewProjectScreen } from './src/views/NewProjectScreen';
+import { ProjectDetailsScreen } from './src/views/ProjectDetailsScreen';
+import { NewDiaryScreen } from './src/views/NewDiaryScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -14,6 +18,9 @@ export default function App() {
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="NewProject" component={NewProjectScreen} />
+        <Stack.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
+        <Stack.Screen name="NewDiary" component={NewDiaryScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>
