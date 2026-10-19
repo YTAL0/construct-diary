@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator }
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProjectDetailsViewModel } from '../viewmodels/useProjectDetailsViewModel';
+import { exportarDiarioParaExcel } from '../services/excelService';
 
 export function ProjectDetailsScreen({ route, navigation }) {
   const { projeto } = route.params;
@@ -19,15 +20,27 @@ export function ProjectDetailsScreen({ route, navigation }) {
     const [ano, mes, dia] = item.data.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
 
-    return (
-      <TouchableOpacity style={styles.diarioCard} onPress={() => alert('Em breve: Ver detalhes do diário!')}>
-        <Ionicons name="document-text" size={30} color="#F47B20" />
-        <View style={styles.diarioInfo}>
-          <Text style={styles.diarioTitle}>Diário de Obra</Text>
-          <Text style={styles.diarioDate}>{dataFormatada}</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={24} color="#CCC" />
-      </TouchableOpacity>
+return (
+      <View style={styles.diarioCard}>
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }} 
+          onPress={() => alert('Em breve: Ver detalhes do diário!')}
+        >
+          <Ionicons name="document-text" size={30} color="#F47B20" />
+          <View style={styles.diarioInfo}>
+            <Text style={styles.diarioTitle}>Diário de Obra</Text>
+            <Text style={styles.diarioDate}>{dataFormatada}</Text>
+          </View>
+        </TouchableOpacity>
+
+        {}
+        <TouchableOpacity 
+          style={{ padding: 10, backgroundColor: '#E8F5E9', borderRadius: 8 }}
+          onPress={() => exportarDiarioParaExcel(projeto, item)}
+        >
+          <Ionicons name="download-outline" size={24} color="#28A745" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -77,7 +90,6 @@ const styles = StyleSheet.create({
   content: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
   emptyText: { textAlign: 'center', color: '#F47B20', fontSize: 16, lineHeight: 24 },
   
-  // Estilos do Cartão do Diário
   diarioCard: {
     flexDirection: 'row',
     backgroundColor: '#F9F9F9',
