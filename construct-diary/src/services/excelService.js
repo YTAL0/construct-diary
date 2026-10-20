@@ -155,18 +155,15 @@ export const exportarDiarioParaExcel = async (projeto, diario) => {
       linha_atual++;
     });
 
-    // 7. Configuração e Exportação
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
     ws['!merges'] = merges;
     
-    // Ajuste da largura das 18 colunas
     ws['!cols'] = Array(18).fill({ wch: 11 }); 
-    ws['!cols'][0] = { wch: 15 }; // Primeira coluna um pouco maior
+    ws['!cols'][0] = { wch: 15 }; 
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Diário");
 
-    // Mantido o Date.now() para burlar o cache do Android
     const excelBase64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
     const nomeFicheiro = `Diario_${dataFormatada.replace(/\//g, '-')}_${Date.now()}.xlsx`;
     const filePath = FileSystem.documentDirectory + nomeFicheiro;

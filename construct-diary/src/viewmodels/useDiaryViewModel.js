@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { supabase } from '../services/supabase'; 
 import * as ImagePicker from 'expo-image-picker';
-
+import { tirarFotoEEnviar } from '../services/fotoService';
 export function useDiaryViewModel() {
   const [colaboradores, setColaboradores] = useState([]);
   const [descricoes, setDescricoes] = useState([]);
@@ -54,8 +54,17 @@ export function useDiaryViewModel() {
     setObservacoes(observacoes.filter(o => o.id !== id));
   };
 
-const salvarFotoNoEstado = (uri) => {
-    setFotos(prevFotos => [...prevFotos, { id: Date.now().toString(), uri }]);
+const processarEGuardarFoto = async (uriLocal) => {
+    setIsLoading(true); 
+    
+    const urlDaNuvem = await enviarFotoParaNuvem(uriLocal);
+    
+    if (urlDaNuvem) {
+      const novaFoto = { id: Date.now().toString(), uri: urlDaNuvem };
+      setFotos(prev => [...prev, novaFoto]); 
+    }
+    
+    setIsLoading(false); 
   };
 
   const addFoto = () => {
@@ -72,12 +81,12 @@ const salvarFotoNoEstado = (uri) => {
               return;
             }
             const resultado = await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images'],
-              quality: 0.5, 
+              mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+              quality: 0.3, 
             });
             
             if (!resultado.canceled) {
-              salvarFotoNoEstado(resultado.assets[0].uri);
+              processarEGuardarFoto(resultado.assets[0].uri); 
             }
           }
         },
@@ -90,12 +99,12 @@ const salvarFotoNoEstado = (uri) => {
               return;
             }
             const resultado = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'],
-              quality: 0.5,
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.3,
             });
 
             if (!resultado.canceled) {
-              salvarFotoNoEstado(resultado.assets[0].uri);
+              processarEGuardarFoto(resultado.assets[0].uri);
             }
           }
         },
