@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDiaryViewModel } from '../viewmodels/useDiaryViewModel';
+import { tirarFotoEEnviar } from '../services/fotoService';
 
 const ColaboradorCard = ({ item, updateColaborador, removeColaborador }) => {
   const inputRef = useRef(null);

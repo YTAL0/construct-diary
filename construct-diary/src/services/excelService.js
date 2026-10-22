@@ -1,174 +1,200 @@
+import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import * as XLSX from 'xlsx-js-style';
+import { encode } from 'base64-arraybuffer'; // O mesmo conversor que já usamos no Supabase!
 
 export const exportarDiarioParaExcel = async (projeto, diario) => {
   try {
-    // 1. Preparar Datas e Endereço
     const [ano, mes, dia] = diario.data.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
     const enderecoObra = `OBRA: ${projeto.nome_projeto || ''} - ${projeto.bairro || ''}, ${projeto.cidade || ''} - CE, ${projeto.cep || ''}`;
 
-    // 2. Definição de Estilos
-    const estiloCabecalho = { 
-      fill: { fgColor: { rgb: "728A3C" } }, 
-      font: { color: { rgb: "FFFFFF" }, bold: true, sz: 14 }, 
-      alignment: { horizontal: "center", vertical: "center" },
-      border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Diário');
+
+    // Configuração de largura (18 colunas mantendo a proporção)
+    for (let i = 1; i <= 18; i++) {
+      ws.getColumn(i).width = 11;
+    }
+    ws.getColumn(1).width = 15; // A primeira coluna precisa ser maior para a palavra "DIÁRIO"
+
+    // Função interna para formatar as cores e bordas no novo formato do ExcelJS
+    const applyStyle = (cell, type) => {
+      cell.border = {
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' }
+      };
+      if (type === 'cabecalho') {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF728A3C' } }; // Verde Oliva
+        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 14 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (type === 'subcabecalho') {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAE6D5' } }; // Cinza Claro
+        cell.font = { bold: true, size: 10 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (type === 'normal') {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (type === 'esquerda') {
+        cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      }
     };
 
-    const estiloSubCabecalho = {
-      fill: { fgColor: { rgb: "EAE6D5" } },
-      font: { bold: true, sz: 10 },
-      alignment: { horizontal: "center", vertical: "center" },
-      border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    let currentRow = 1;
 
-    const estiloNormal = {
-      alignment: { horizontal: "center", vertical: "center" },
-      border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    // 1. Linhas de Título Superiores
+    ws.addRow(["DIÁRIO DE OBRA", ...Array(15).fill(""), "DATA", ""]);
+    ws.mergeCells(currentRow, 1, currentRow, 16);
+    ws.mergeCells(currentRow, 17, currentRow, 18);
+    ws.getRow(currentRow).eachCell(c => applyStyle(c, 'cabecalho'));
+    currentRow++;
 
-    const estiloEsquerda = {
-      alignment: { horizontal: "left", vertical: "center", wrapText: true },
-      border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    ws.addRow([enderecoObra.toUpperCase(), ...Array(15).fill(""), dataFormatada, ""]);
+    ws.mergeCells(currentRow, 1, currentRow, 16);
+    ws.mergeCells(currentRow, 17, currentRow, 18);
+    ws.getRow(currentRow).eachCell((c, col) => applyStyle(c, col <= 16 ? 'cabecalho' : 'normal'));
+    ws.getRow(currentRow).getCell(17).font = { bold: true, size: 12 };
+    currentRow++;
 
-    const ws_data = [];
-    const merges = [];
-
-    // 3. Montar Cabeçalhos Superiores (Largura Total = 18 Colunas)
-    // Linha 0: DIÁRIO DE OBRA (16 cols) + DATA (2 cols)
-    ws_data.push([
-      { v: "DIÁRIO DE OBRA", s: estiloCabecalho }, 
-      ...Array(15).fill({ v: "", s: estiloCabecalho }), // Preenche invisível para manter a borda
-      { v: "DATA", s: estiloCabecalho },
-      { v: "", s: estiloCabecalho }
-    ]);
-    merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 15 } });
-    merges.push({ s: { r: 0, c: 16 }, e: { r: 0, c: 17 } });
-
-    // Linha 1: Endereço (16 cols) + Data Valor (2 cols)
-    ws_data.push([
-      { v: enderecoObra.toUpperCase(), s: estiloCabecalho }, 
-      ...Array(15).fill({ v: "", s: estiloCabecalho }),
-      { v: dataFormatada, s: { ...estiloNormal, font: { bold: true, sz: 12 } } },
-      { v: "", s: estiloNormal }
-    ]);
-    merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 15 } });
-    merges.push({ s: { r: 1, c: 16 }, e: { r: 1, c: 17 } });
-
-    // 4. Lógica de Blocos de Colaboradores (Chunks de 8)
+    // 2. Lógica de Blocos de Colaboradores (Chunks de 8)
     const maxCargos = 8;
     const colaboradores = diario.colaboradores || [];
-    const chunked = [];
-    
-    // Divide os colaboradores em grupos de 8
+    const chunkedCargos = [];
     for (let i = 0; i < colaboradores.length; i += maxCargos) {
-      chunked.push(colaboradores.slice(i, i + maxCargos));
+      chunkedCargos.push(colaboradores.slice(i, i + maxCargos));
     }
-    if (chunked.length === 0) chunked.push([]); // Garante que gera pelo menos 1 bloco vazio
+    if (chunkedCargos.length === 0) chunkedCargos.push([]);
 
-    // Calcular somas gerais
-    let totalAvisos = 0;
-    let totalFaltas = 0;
-    colaboradores.forEach(c => {
-      totalAvisos += parseInt(c.avisos) || 0;
-      totalFaltas += parseInt(c.faltas) || 0;
-    });
+    let totalAvisos = 0; let totalFaltas = 0;
+    colaboradores.forEach(c => { totalAvisos += parseInt(c.avisos) || 0; totalFaltas += parseInt(c.faltas) || 0; });
 
-    let linha_atual = 2; // Rastreador de índice da linha atual (0-based)
+    chunkedCargos.forEach((chunk, index) => {
+      const rowCargos = ws.addRow(Array(18).fill(""));
+      const rowSub = ws.addRow(Array(18).fill(""));
+      const rowValores = ws.addRow(Array(18).fill(""));
 
-    // Gerar cada bloco
-    for (let b = 0; b < chunked.length; b++) {
-      const chunk = chunked[b];
-      const linhaCargos = [];
-      const linhaSub = [];
-      const linhaValores = [];
-
-      // Preenche os 8 espaços (com dados ou vazios)
       for (let i = 0; i < maxCargos; i++) {
+        const c = i * 2 + 1;
         if (i < chunk.length) {
           const colab = chunk[i];
-          linhaCargos.push({ v: colab.cargo.toUpperCase(), s: estiloSubCabecalho }, { v: "", s: estiloSubCabecalho });
-          linhaSub.push({ v: "AVISO", s: estiloSubCabecalho }, { v: "FALTAS", s: estiloSubCabecalho });
-          linhaValores.push({ v: colab.avisos || 0, s: estiloNormal }, { v: colab.faltas || 0, s: estiloNormal });
+          rowCargos.getCell(c).value = colab.cargo.toUpperCase();
+          rowSub.getCell(c).value = "AVISO"; rowSub.getCell(c + 1).value = "FALTAS";
+          rowValores.getCell(c).value = parseInt(colab.avisos) || 0;
+          rowValores.getCell(c + 1).value = parseInt(colab.faltas) || 0;
         } else {
-          linhaCargos.push({ v: "", s: estiloSubCabecalho }, { v: "", s: estiloSubCabecalho });
-          linhaSub.push({ v: "AVISO", s: estiloSubCabecalho }, { v: "FALTAS", s: estiloSubCabecalho });
-          linhaValores.push({ v: "", s: estiloNormal }, { v: "", s: estiloNormal });
+          rowSub.getCell(c).value = "AVISO"; rowSub.getCell(c + 1).value = "FALTAS";
         }
-        
-        // Mescla o título do cargo sob 2 colunas
-        merges.push({ s: { r: linha_atual, c: i * 2 }, e: { r: linha_atual, c: i * 2 + 1 } });
+        ws.mergeCells(currentRow, c, currentRow, c + 1);
+        applyStyle(rowCargos.getCell(c), 'subcabecalho'); applyStyle(rowCargos.getCell(c+1), 'subcabecalho');
+        applyStyle(rowSub.getCell(c), 'subcabecalho'); applyStyle(rowSub.getCell(c+1), 'subcabecalho');
+        applyStyle(rowValores.getCell(c), 'normal'); applyStyle(rowValores.getCell(c+1), 'normal');
       }
 
-      // Adiciona a secção de TOTAIS apenas no lado direito do PRIMEIRO bloco
-      if (b === 0) {
-        linhaCargos.push({ v: "TOTAL AVISO", s: estiloSubCabecalho }, { v: "TOTAL FALTAS", s: estiloSubCabecalho });
-        linhaSub.push({ v: "", s: estiloSubCabecalho }, { v: "", s: estiloSubCabecalho }); 
-        linhaValores.push({ v: totalAvisos, s: estiloNormal }, { v: totalFaltas, s: estiloNormal });
-
-        // Mescla "TOTAL AVISO" e "TOTAL FALTAS" para ocupar as duas primeiras linhas verticais do cabeçalho
-        merges.push({ s: { r: linha_atual, c: 16 }, e: { r: linha_atual + 1, c: 16 } });
-        merges.push({ s: { r: linha_atual, c: 17 }, e: { r: linha_atual + 1, c: 17 } });
+      if (index === 0) {
+        rowCargos.getCell(17).value = "TOTAL AVISO"; rowCargos.getCell(18).value = "TOTAL FALTAS";
+        rowValores.getCell(17).value = totalAvisos; rowValores.getCell(18).value = totalFaltas;
+        ws.mergeCells(currentRow, 17, currentRow + 1, 17); ws.mergeCells(currentRow, 18, currentRow + 1, 18);
+        applyStyle(rowCargos.getCell(17), 'subcabecalho'); applyStyle(rowCargos.getCell(18), 'subcabecalho');
+        applyStyle(rowValores.getCell(17), 'normal'); applyStyle(rowValores.getCell(18), 'normal');
       } else {
-        // Se for o segundo, terceiro bloco etc, deixa o lado direito em branco alinhado
-        linhaCargos.push({ v: "", s: estiloNormal }, { v: "", s: estiloNormal });
-        linhaSub.push({ v: "", s: estiloNormal }, { v: "", s: estiloNormal });
-        linhaValores.push({ v: "", s: estiloNormal }, { v: "", s: estiloNormal });
-        // Mescla o buraco vazio direito num bloco só (opcional para estética limpa)
-        merges.push({ s: { r: linha_atual, c: 16 }, e: { r: linha_atual + 2, c: 17 } });
+        ws.mergeCells(currentRow, 17, currentRow + 2, 18);
+        applyStyle(rowCargos.getCell(17), 'normal'); applyStyle(rowCargos.getCell(18), 'normal');
       }
+      currentRow += 3;
+    });
 
-      ws_data.push(linhaCargos, linhaSub, linhaValores);
-      linha_atual += 3; // Avança 3 linhas para o próximo bloco/secção
-    }
-
-    // 5. Bloco de Descrição (Acompanha até ao final das 18 colunas)
-    ws_data.push([
-      { v: "DESCRIÇÃO DOS SERVIÇOS", s: estiloCabecalho }, 
-      ...Array(17).fill({ v: "", s: estiloCabecalho })
-    ]);
-    merges.push({ s: { r: linha_atual, c: 0 }, e: { r: linha_atual, c: 17 } });
-    linha_atual++;
+    // 3. Descrições
+    ws.addRow(["DESCRIÇÃO DOS SERVIÇOS", ...Array(17).fill("")]);
+    ws.mergeCells(currentRow, 1, currentRow, 18);
+    ws.getRow(currentRow).eachCell(c => applyStyle(c, 'cabecalho'));
+    currentRow++;
 
     const descricoes = diario.descricoes?.length ? diario.descricoes : [{texto: ""}];
     descricoes.forEach(desc => {
-      ws_data.push([{ v: desc.texto, s: estiloEsquerda }, ...Array(17).fill({ v: "", s: estiloEsquerda })]);
-      merges.push({ s: { r: linha_atual, c: 0 }, e: { r: linha_atual, c: 17 } });
-      linha_atual++;
+      ws.addRow([desc.texto, ...Array(17).fill("")]);
+      ws.mergeCells(currentRow, 1, currentRow, 18);
+      ws.getRow(currentRow).eachCell(c => applyStyle(c, 'esquerda'));
+      currentRow++;
     });
 
-    // 6. Bloco de Observações (Acompanha até ao final das 18 colunas)
-    ws_data.push([
-      { v: "OBSERVAÇÕES", s: estiloCabecalho }, 
-      ...Array(17).fill({ v: "", s: estiloCabecalho })
-    ]);
-    merges.push({ s: { r: linha_atual, c: 0 }, e: { r: linha_atual, c: 17 } });
-    linha_atual++;
+    // 4. Observações
+    ws.addRow(["OBSERVAÇÕES", ...Array(17).fill("")]);
+    ws.mergeCells(currentRow, 1, currentRow, 18);
+    ws.getRow(currentRow).eachCell(c => applyStyle(c, 'cabecalho'));
+    currentRow++;
 
     const observacoes = diario.observacoes?.length ? diario.observacoes : [{texto: ""}];
     observacoes.forEach(obs => {
-      ws_data.push([{ v: obs.texto, s: estiloEsquerda }, ...Array(17).fill({ v: "", s: estiloEsquerda })]);
-      merges.push({ s: { r: linha_atual, c: 0 }, e: { r: linha_atual, c: 17 } });
-      linha_atual++;
+      ws.addRow([obs.texto, ...Array(17).fill("")]);
+      ws.mergeCells(currentRow, 1, currentRow, 18);
+      ws.getRow(currentRow).eachCell(c => applyStyle(c, 'esquerda'));
+      currentRow++;
     });
-
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    ws['!merges'] = merges;
     
-    ws['!cols'] = Array(18).fill({ wch: 11 }); 
-    ws['!cols'][0] = { wch: 15 }; 
+    ws.addRow(["FOTOS", ...Array(17).fill("")]);
+    ws.mergeCells(currentRow, 1, currentRow, 18);
+    ws.getRow(currentRow).eachCell(c => applyStyle(c, 'cabecalho'));
+    currentRow++;
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Diário");
+    const fotos = diario.fotos || [];
+    if (fotos.length > 0) {
 
-    const excelBase64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      const fotosChunked = [];
+      for (let i = 0; i < fotos.length; i += 4) {
+        fotosChunked.push(fotos.slice(i, i + 4));
+      }
+      const colSpans = [
+        { s: 0, e: 4, mergeS: 1, mergeE: 4 },    
+        { s: 4, e: 9, mergeS: 5, mergeE: 9 },    
+        { s: 9, e: 14, mergeS: 10, mergeE: 14 }, 
+        { s: 14, e: 18, mergeS: 15, mergeE: 18 } 
+      ];
+
+      for (const chunk of fotosChunked) {
+        const imgRow = ws.addRow(Array(18).fill(""));
+        imgRow.height = 160; 
+        ws.mergeCells(currentRow, colSpans[0].mergeS, currentRow, colSpans[0].mergeE);
+        ws.mergeCells(currentRow, colSpans[1].mergeS, currentRow, colSpans[1].mergeE);
+        ws.mergeCells(currentRow, colSpans[2].mergeS, currentRow, colSpans[2].mergeE);
+        ws.mergeCells(currentRow, colSpans[3].mergeS, currentRow, colSpans[3].mergeE);
+        imgRow.eachCell(c => applyStyle(c, 'normal')); 
+
+        for (let i = 0; i < chunk.length; i++) {
+          try {
+            const localUri = FileSystem.cacheDirectory + 'img_' + Date.now() + i + '.jpg';
+            const { uri } = await FileSystem.downloadAsync(chunk[i].uri, localUri);
+            
+            const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+
+            const imageId = wb.addImage({
+              base64: 'data:image/jpeg;base64,' + base64,
+              extension: 'jpeg',
+            });
+
+            ws.addImage(imageId, {
+              tl: { col: colSpans[i].s, row: currentRow - 1 },
+              br: { col: colSpans[i].e, row: currentRow },
+              editAs: 'oneCell' 
+            });
+          } catch (err) {
+            console.log("Erro ao embutir foto:", err);
+          }
+        }
+        currentRow++;
+      }
+    } else {
+       ws.addRow(["Nenhum registro fotográfico nesta data.", ...Array(17).fill("")]);
+       ws.mergeCells(currentRow, 1, currentRow, 18);
+       ws.getRow(currentRow).eachCell(c => applyStyle(c, 'normal'));
+       currentRow++;
+    }
+
+    const uint8Array = await wb.xlsx.writeBuffer();
+    const base64Excel = encode(uint8Array); 
+
     const nomeFicheiro = `Diario_${dataFormatada.replace(/\//g, '-')}_${Date.now()}.xlsx`;
     const filePath = FileSystem.documentDirectory + nomeFicheiro;
 
-    await FileSystem.writeAsStringAsync(filePath, excelBase64, { encoding: FileSystem.EncodingType.Base64 });
+    await FileSystem.writeAsStringAsync(filePath, base64Excel, { encoding: FileSystem.EncodingType.Base64 });
 
     await Sharing.shareAsync(filePath, {
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

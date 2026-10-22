@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { supabase } from '../services/supabase'; 
 import * as ImagePicker from 'expo-image-picker';
-import { tirarFotoEEnviar } from '../services/fotoService';
+import * as FileSystem from 'expo-file-system/legacy';
+import { decode } from 'base64-arraybuffer';
+
 export function useDiaryViewModel() {
   const [colaboradores, setColaboradores] = useState([]);
   const [descricoes, setDescricoes] = useState([]);
@@ -54,17 +56,37 @@ export function useDiaryViewModel() {
     setObservacoes(observacoes.filter(o => o.id !== id));
   };
 
-const processarEGuardarFoto = async (uriLocal) => {
+  // Lógica completa de upload unificada aqui para evitar erros de importação
+  const processarEGuardarFoto = async (uriLocal) => {
     setIsLoading(true); 
-    
-    const urlDaNuvem = await enviarFotoParaNuvem(uriLocal);
-    
-    if (urlDaNuvem) {
-      const novaFoto = { id: Date.now().toString(), uri: urlDaNuvem };
+    try {
+      const nomeArquivo = `obra_${Date.now()}.jpg`;
+      
+      const base64 = await FileSystem.readAsStringAsync(uriLocal, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const { data, error } = await supabase.storage
+        .from('fotos_diario') 
+        .upload(nomeArquivo, decode(base64), {
+          contentType: 'image/jpeg',
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('fotos_diario')
+        .getPublicUrl(nomeArquivo);
+
+      const novaFoto = { id: Date.now().toString(), uri: publicUrlData.publicUrl };
       setFotos(prev => [...prev, novaFoto]); 
+      
+    } catch (error) {
+      console.error("Erro no upload da foto:", error);
+      alert("Falha ao enviar a imagem para a nuvem.");
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false); 
   };
 
   const addFoto = () => {
@@ -81,7 +103,7 @@ const processarEGuardarFoto = async (uriLocal) => {
               return;
             }
             const resultado = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+              mediaTypes: ['images'], // Aviso resolvido
               quality: 0.3, 
             });
             
@@ -99,7 +121,7 @@ const processarEGuardarFoto = async (uriLocal) => {
               return;
             }
             const resultado = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              mediaTypes: ['images'], // Aviso resolvido
               quality: 0.3,
             });
 
