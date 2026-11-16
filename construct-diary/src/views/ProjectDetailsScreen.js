@@ -1,10 +1,12 @@
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProjectDetailsViewModel } from '../viewmodels/useProjectDetailsViewModel';
 import { exportarDiarioParaExcel } from '../services/excelService';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '../services/supabase'; 
+
 export function ProjectDetailsScreen({ route, navigation }) {
   const { projeto } = route.params;
   const { diarios, isLoading, fetchDiarios } = useProjectDetailsViewModel(projeto.id);
@@ -14,29 +16,73 @@ export function ProjectDetailsScreen({ route, navigation }) {
       fetchDiarios();
     }, [fetchDiarios])
   );
+  const handleDeleteDiario = (diarioId, fotosDoDiario) => {
+    Alert.alert(
+      "Excluir Diário",
+      "Tem certeza de que deseja excluir este diário de obra? Esta ação não pode ser desfeita.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (fotosDoDiario && fotosDoDiario.length > 0) {
+                const arquivosParaApagar = [];
+                fotosDoDiario.forEach(foto => {
+                  if (foto.uri) {
+                    const partes = foto.uri.split('/');
+                    const nomeArquivo = partes[partes.length - 1];
+                    if (nomeArquivo) arquivosParaApagar.push(nomeArquivo);
+                  }
+                });
+
+                if (arquivosParaApagar.length > 0) {
+                  await supabase.storage
+                    .from('fotos_diario')
+                    .remove(arquivosParaApagar);
+                }
+              }
+              const { error } = await supabase
+                .from('diarios')
+                .delete()
+                .eq('id', diarioId);
+
+              if (error) throw error;
+
+              fetchDiarios();
+              Alert.alert("Sucesso", "Diário excluído com sucesso.");
+            } catch (error) {
+              console.error("Erro ao excluir diário:", error.message);
+              Alert.alert("Erro", "Não foi possível excluir o diário.");
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const renderDiario = ({ item }) => {
     const [ano, mes, dia] = item.data.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
 
     return (
-      <View style={styles.diarioCard}>
-        {}
-        <TouchableOpacity 
-          style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }} 
-          onPress={() => {
-            navigation.navigate('NewDiary', { 
-              projeto: projeto, 
-              diario: item 
-            });
-          }}
-        >
-          <Ionicons name="document-text" size={30} color="#F47B20" />
-          <View style={styles.diarioInfo}>
-            <Text style={styles.diarioTitle}>Diário de Obra</Text>
-            <Text style={styles.diarioDate}>{dataFormatada}</Text>
-          </View>
-        </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.diarioCard}
+        onPress={() => {
+          navigation.navigate('NewDiary', { 
+            projeto: projeto, 
+            diario: item 
+          });
+        }}
+        onLongPress={() => handleDeleteDiario(item.id, item.fotos)} 
+        delayLongPress={500}
+      >
+        <Ionicons name="document-text" size={30} color="#F47B20" />
+        <View style={styles.diarioInfo}>
+          <Text style={styles.diarioTitle}>Diário de Obra</Text>
+          <Text style={styles.diarioDate}>{dataFormatada}</Text>
+        </View>
 
         {}
         <TouchableOpacity 
@@ -45,21 +91,20 @@ export function ProjectDetailsScreen({ route, navigation }) {
         >
           <Ionicons name="download-outline" size={24} color="#28A745" />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
-      <View style={styles.topBar}>
-        <Text style={styles.topBarTitle} numberOfLines={1}>
-          {projeto.nome_projeto}
-        </Text>
-      </View>
+        <View style={styles.topBar}>
+          <Text style={styles.topBarTitle} numberOfLines={1}>
+            {projeto.nome_projeto}
+          </Text>
+        </View>
       </SafeAreaView>
 
-      {}
       {isLoading ? (
         <ActivityIndicator size="large" color="#F47B20" style={{ marginTop: 50 }} />
       ) : diarios.length === 0 ? (
@@ -79,7 +124,6 @@ export function ProjectDetailsScreen({ route, navigation }) {
         />
       )}
 
-      {}
       <TouchableOpacity 
         style={styles.fab} 
         onPress={() => navigation.navigate('NewDiary', { projeto })}
