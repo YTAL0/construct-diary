@@ -2,13 +2,20 @@ import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useProjectViewModel } from '../viewmodels/useProjectViewModel';
+import { limparDiariosAntigos } from '../services/cleanupService';
 
 export function HomeScreen({ navigation }) {
   const { projetos, isLoading, fetchProjetos } = useProjectViewModel();
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+
+const carregarDadosELimpar = async () => {
+      await limparDiariosAntigos();
       fetchProjetos();
+    };
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      carregarDadosELimpar();
     });
     return unsubscribe;
   }, [navigation]);
