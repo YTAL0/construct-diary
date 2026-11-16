@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="construct-diary/assets/logo.png" alt="Logo do Projeto" width="220" style="border-radius: 50%;" />
+  <img src="construct-diary/assets/image.png" alt="Logo do Projeto" width="220" style="border-radius: 50%;" />
 </p>
 # Diário de Obra - Aplicativo Mobile
 
