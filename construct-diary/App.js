@@ -8,6 +8,7 @@ import { HomeScreen } from './src/views/HomeScreen';
 import { NewProjectScreen } from './src/views/NewProjectScreen';
 import { ProjectDetailsScreen } from './src/views/ProjectDetailsScreen';
 import { NewDiaryScreen } from './src/views/NewDiaryScreen';
+import { ProjectFormScreen } from './src/views/ProjectFormScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
         <Stack.Screen name="NewProject" component={NewProjectScreen} />
         <Stack.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
         <Stack.Screen name="NewDiary" component={NewDiaryScreen} />
+        <Stack.Screen name="ProjectFormScreen" component={ProjectFormScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={HomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>

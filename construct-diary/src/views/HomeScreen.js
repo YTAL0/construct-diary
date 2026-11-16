@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useProjectViewModel } from '../viewmodels/useProjectViewModel';
 
@@ -13,10 +13,23 @@ export function HomeScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
-const renderFolder = ({ item }) => (
+  const renderFolder = ({ item }) => (
     <TouchableOpacity 
       style={styles.folderContainer}
       onPress={() => navigation.navigate('ProjectDetails', { projeto: item })}
+      onLongPress={() => {
+        Alert.alert(
+          "Gerenciar Projeto",
+          `O que deseja fazer com "${item.nome_projeto}"?`,
+          [
+            { text: "Cancelar", style: "cancel" },
+            { 
+              text: "Editar Dados", 
+              onPress: () => navigation.navigate('ProjectFormScreen', { projeto: item }) 
+            }
+          ]
+        );
+      }}
     >
       <View style={styles.folderTab} />
       <View style={styles.folderBody}>
@@ -45,7 +58,6 @@ const renderFolder = ({ item }) => (
         )}
       </View>
 
-      {}
       <TouchableOpacity 
         style={styles.fab} 
         onPress={() => navigation.navigate('NewProject')}
@@ -76,8 +88,8 @@ const styles = StyleSheet.create({
     borderRadius: 30, 
     justifyContent: 'center', 
     alignItems: 'center',
-    elevation: 5, // Sombra no Android
-    shadowColor: '#000', // Sombra no iOS
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3
