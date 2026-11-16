@@ -5,7 +5,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
-// Recebe opcionalmente um diário existente para edição
 export function useDiaryViewModel(diarioExistente = null) {
   const [colaboradores, setColaboradores] = useState(diarioExistente?.colaboradores || []);
   const [descricoes, setDescricoes] = useState(diarioExistente?.descricoes || []);
@@ -14,6 +13,48 @@ export function useDiaryViewModel(diarioExistente = null) {
   const [isLoading, setIsLoading] = useState(false);
 
   const isEditing = !!diarioExistente?.id;
+
+  const verificarUltimaEquipe = async (projetoId) => {
+    if (isEditing || !projetoId) return; 
+
+    try {
+      const { data, error } = await supabase
+        .from('diarios')
+        .select('colaboradores')
+        .eq('projeto_id', projetoId) 
+        .order('data', { ascending: false }) 
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0 && data[0].colaboradores && data[0].colaboradores.length > 0) {
+        const equipeAnterior = data[0].colaboradores;
+
+        Alert.alert(
+          "Reutilizar Colaboradores",
+          "Deseja utilizar a mesma configuração de colaboradores do diário anterior deste projeto?",
+          [
+            {
+              text: "Não",
+              style: "cancel"
+            },
+            {
+              text: "Sim",
+              onPress: () => {
+                const equipeAtualizada = equipeAnterior.map((c, index) => ({
+                  ...c,
+                  id: (Date.now() + index).toString()
+                }));
+                setColaboradores(equipeAtualizada);
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao verificar diário anterior:", error.message);
+    }
+  };
 
   const addColaborador = () => {
     setColaboradores([...colaboradores, { 
@@ -149,7 +190,6 @@ export function useDiaryViewModel(diarioExistente = null) {
     let error;
 
     if (isEditing) {
-      // Se estiver a editar, faz UPDATE pelo ID do diário
       const res = await supabase.from('diarios').update({
         colaboradores, 
         descricoes,
@@ -158,7 +198,6 @@ export function useDiaryViewModel(diarioExistente = null) {
       }).eq('id', diarioExistente.id);
       error = res.error;
     } else {
-      // Se for novo, faz INSERT
       const res = await supabase.from('diarios').insert([{
         projeto_id: projetoId,
         user_id: user?.id,
@@ -186,6 +225,7 @@ export function useDiaryViewModel(diarioExistente = null) {
     descricoes, addDescricao, updateDescricao, removeDescricao,
     observacoes, addObservacao, updateObservacao, removeObservacao,
     fotos, addFoto, removeFoto,
+    verificarUltimaEquipe, 
     saveDiario, isLoading, isEditing
   };
 }
