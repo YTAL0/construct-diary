@@ -16,15 +16,20 @@ export function ProjectDetailsScreen({ route, navigation }) {
   );
 
   const renderDiario = ({ item }) => {
-    
     const [ano, mes, dia] = item.data.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
 
-return (
+    return (
       <View style={styles.diarioCard}>
+        {/* Ao clicar no card, abre a NewDiaryScreen para edição passando o projeto e o diário */}
         <TouchableOpacity 
           style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }} 
-          onPress={() => alert('Em breve: Ver detalhes do diário!')}
+          onPress={() => {
+            navigation.navigate('NewDiary', { 
+              projeto: projeto, 
+              diario: item 
+            });
+          }}
         >
           <Ionicons name="document-text" size={30} color="#F47B20" />
           <View style={styles.diarioInfo}>
@@ -33,7 +38,7 @@ return (
           </View>
         </TouchableOpacity>
 
-        {}
+        {/* Botão de download do Excel continua intacto */}
         <TouchableOpacity 
           style={{ padding: 10, backgroundColor: '#E8F5E9', borderRadius: 8 }}
           onPress={() => exportarDiarioParaExcel(projeto, item)}
@@ -72,7 +77,7 @@ return (
         />
       )}
 
-      {/* Botão Flutuante (FAB) */}
+      {/* Botão Flutuante (FAB) para criar novo diário */}
       <TouchableOpacity 
         style={styles.fab} 
         onPress={() => navigation.navigate('NewDiary', { projeto })}
@@ -97,8 +102,8 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     alignItems: 'center',
-    elevation: 2, // Sombra Android
-    shadowColor: '#000', // Sombra iOS
+    elevation: 2,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,

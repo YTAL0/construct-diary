@@ -2,13 +2,12 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDiaryViewModel } from '../viewmodels/useDiaryViewModel';
-import { tirarFotoEEnviar } from '../services/fotoService';
 
 const ColaboradorCard = ({ item, updateColaborador, removeColaborador }) => {
   const inputRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false); 
 
-return (
+  return (
     <View style={[
       styles.card, 
       !isExpanded && { 
@@ -16,7 +15,7 @@ return (
         paddingHorizontal: 20,    
         borderRadius: 15,         
         elevation: 4,             
-        shadowColor: '#000',     
+        shadowColor: '#000',    
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 3
@@ -30,20 +29,17 @@ return (
           onChangeText={(text) => updateColaborador(item.id, 'cargo', text)}
         />
         
-        {}
         {isExpanded && (
           <TouchableOpacity onPress={() => inputRef.current?.focus()} style={{ padding: 5, marginRight: 5 }}>
             <Ionicons name="pencil" size={18} color="#007AFF" />
           </TouchableOpacity>
         )}
 
-        {}
         <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)} style={{ padding: 5 }}>
           <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={24} color="#000" />
         </TouchableOpacity>
       </View>
       
-      {}
       {isExpanded && (
         <>
           <View style={styles.cardRow}>
@@ -114,26 +110,28 @@ const FotoCard = ({ item, removeFunc }) => {
 };
 
 export function NewDiaryScreen({ route, navigation }) {
-  const { projeto } = route.params;
+  const { projeto, diario } = route.params || {}; // Recebe o projeto e o diário (se for edição)
+  
   const { 
     colaboradores, addColaborador, updateColaborador, removeColaborador,
     descricoes, addDescricao, updateDescricao, removeDescricao,
     observacoes, addObservacao, updateObservacao, removeObservacao,
     fotos, addFoto, removeFoto,
-    saveDiario, isLoading
-  } = useDiaryViewModel();
+    saveDiario, isLoading, isEditing
+  } = useDiaryViewModel(diario); // Passa o diário existente para o ViewModel
 
-  const dataAtual = new Date();
-  const dataFormatada = `${String(dataAtual.getDate()).padStart(2, '0')}/${String(dataAtual.getMonth() + 1).padStart(2, '0')}`;
+  const dataAlvo = diario?.data ? new Date(diario.data + 'T00:00:00') : new Date();
+  const dataFormatada = `${String(dataAlvo.getDate()).padStart(2, '0')}/${String(dataAlvo.getMonth() + 1).padStart(2, '0')}`;
 
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <Text style={styles.topBarTitle}>Diário de obra {dataFormatada}</Text>
+        <Text style={styles.topBarTitle}>
+          {isEditing ? `Editar Diário ${dataFormatada}` : `Diário de obra ${dataFormatada}`}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Colaboradores</Text>
           {colaboradores.map(c => (
@@ -178,21 +176,19 @@ export function NewDiaryScreen({ route, navigation }) {
             <Text style={styles.addButtonText}>ADICIONAR</Text>
           </TouchableOpacity>
         </View>
-          {}
+          
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Fotos</Text>
-          
           <View style={styles.fotosContainer}>
             {fotos.map(f => (
               <FotoCard key={f.id} item={f} removeFunc={removeFoto} />
             ))}
           </View>
-
           <TouchableOpacity style={styles.addButton} onPress={addFoto}>
             <Text style={styles.addButtonText}>ADICIONAR</Text>
           </TouchableOpacity>
         </View>
-        {}
+
         {isLoading ? (
           <ActivityIndicator size="large" color="#F47B20" style={{ marginTop: 20 }} />
         ) : (
@@ -200,7 +196,9 @@ export function NewDiaryScreen({ route, navigation }) {
             style={styles.saveButton} 
             onPress={() => saveDiario(projeto.id, () => navigation.goBack())}
           >
-            <Text style={styles.saveButtonText}>SALVAR DIÁRIO</Text>
+            <Text style={styles.saveButtonText}>
+              {isEditing ? 'SALVAR ALTERAÇÕES' : 'SALVAR DIÁRIO'}
+            </Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -233,5 +231,4 @@ const styles = StyleSheet.create({
   fotoDeleteIcon: { marginTop: 10 },
   saveButton: { backgroundColor: '#F47B20', paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginTop: 30, marginHorizontal: 10 },
   saveButtonText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
-  
 });

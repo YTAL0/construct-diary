@@ -5,12 +5,15 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
-export function useDiaryViewModel() {
-  const [colaboradores, setColaboradores] = useState([]);
-  const [descricoes, setDescricoes] = useState([]);
-  const [observacoes, setObservacoes] = useState([]);
-  const [fotos, setFotos] = useState([]);
+// Recebe opcionalmente um diário existente para edição
+export function useDiaryViewModel(diarioExistente = null) {
+  const [colaboradores, setColaboradores] = useState(diarioExistente?.colaboradores || []);
+  const [descricoes, setDescricoes] = useState(diarioExistente?.descricoes || []);
+  const [observacoes, setObservacoes] = useState(diarioExistente?.observacoes || []);
+  const [fotos, setFotos] = useState(diarioExistente?.fotos || []);
   const [isLoading, setIsLoading] = useState(false);
+
+  const isEditing = !!diarioExistente?.id;
 
   const addColaborador = () => {
     setColaboradores([...colaboradores, { 
@@ -56,7 +59,6 @@ export function useDiaryViewModel() {
     setObservacoes(observacoes.filter(o => o.id !== id));
   };
 
-  // Lógica completa de upload unificada aqui para evitar erros de importação
   const processarEGuardarFoto = async (uriLocal) => {
     setIsLoading(true); 
     try {
@@ -103,7 +105,7 @@ export function useDiaryViewModel() {
               return;
             }
             const resultado = await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images'], // Aviso resolvido
+              mediaTypes: ['images'], 
               quality: 0.3, 
             });
             
@@ -121,7 +123,7 @@ export function useDiaryViewModel() {
               return;
             }
             const resultado = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'], // Aviso resolvido
+              mediaTypes: ['images'],
               quality: 0.3,
             });
 
@@ -142,24 +144,39 @@ export function useDiaryViewModel() {
   const saveDiario = async (projetoId, onSuccess) => {
     setIsLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const hoje = new Date().toISOString().split('T')[0];
+    const hoje = diarioExistente?.data || new Date().toISOString().split('T')[0];
 
-    const { error } = await supabase.from('diarios').insert([{
-      projeto_id: projetoId,
-      user_id: user?.id,
-      data: hoje,
-      colaboradores, 
-      descricoes,
-      observacoes,
-      fotos
-    }]);
+    let error;
+
+    if (isEditing) {
+      // Se estiver a editar, faz UPDATE pelo ID do diário
+      const res = await supabase.from('diarios').update({
+        colaboradores, 
+        descricoes,
+        observacoes,
+        fotos
+      }).eq('id', diarioExistente.id);
+      error = res.error;
+    } else {
+      // Se for novo, faz INSERT
+      const res = await supabase.from('diarios').insert([{
+        projeto_id: projetoId,
+        user_id: user?.id,
+        data: hoje,
+        colaboradores, 
+        descricoes,
+        observacoes,
+        fotos
+      }]);
+      error = res.error;
+    }
 
     setIsLoading(false);
 
     if (error) {
       alert("Erro ao salvar: " + error.message);
     } else {
-      alert('Diário salvo com sucesso!');
+      alert(isEditing ? 'Alterações salvas com sucesso!' : 'Diário salvo com sucesso!');
       if (onSuccess) onSuccess();
     }
   };
@@ -169,6 +186,6 @@ export function useDiaryViewModel() {
     descricoes, addDescricao, updateDescricao, removeDescricao,
     observacoes, addObservacao, updateObservacao, removeObservacao,
     fotos, addFoto, removeFoto,
-    saveDiario, isLoading
+    saveDiario, isLoading, isEditing
   };
 }

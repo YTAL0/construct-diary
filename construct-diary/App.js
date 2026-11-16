@@ -8,7 +8,6 @@ import { HomeScreen } from './src/views/HomeScreen';
 import { NewProjectScreen } from './src/views/NewProjectScreen';
 import { ProjectDetailsScreen } from './src/views/ProjectDetailsScreen';
 import { NewDiaryScreen } from './src/views/NewDiaryScreen';
-
 const Stack = createNativeStackNavigator();
 
 export default function App() {

@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { encode } from 'base64-arraybuffer'; // O mesmo conversor que já usamos no Supabase!
+import { encode } from 'base64-arraybuffer'; 
 
 export const exportarDiarioParaExcel = async (projeto, diario) => {
   try {
@@ -12,24 +12,22 @@ export const exportarDiarioParaExcel = async (projeto, diario) => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Diário');
 
-    // Configuração de largura (18 colunas mantendo a proporção)
     for (let i = 1; i <= 18; i++) {
       ws.getColumn(i).width = 11;
     }
-    ws.getColumn(1).width = 15; // A primeira coluna precisa ser maior para a palavra "DIÁRIO"
+    ws.getColumn(1).width = 15; 
 
-    // Função interna para formatar as cores e bordas no novo formato do ExcelJS
     const applyStyle = (cell, type) => {
       cell.border = {
         top: { style: 'thin' }, bottom: { style: 'thin' },
         left: { style: 'thin' }, right: { style: 'thin' }
       };
       if (type === 'cabecalho') {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF728A3C' } }; // Verde Oliva
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF728A3C' } }; 
         cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 14 };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       } else if (type === 'subcabecalho') {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAE6D5' } }; // Cinza Claro
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAE6D5' } }; 
         cell.font = { bold: true, size: 10 };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       } else if (type === 'normal') {
@@ -41,7 +39,6 @@ export const exportarDiarioParaExcel = async (projeto, diario) => {
 
     let currentRow = 1;
 
-    // 1. Linhas de Título Superiores
     ws.addRow(["DIÁRIO DE OBRA", ...Array(15).fill(""), "DATA", ""]);
     ws.mergeCells(currentRow, 1, currentRow, 16);
     ws.mergeCells(currentRow, 17, currentRow, 18);
@@ -55,7 +52,6 @@ export const exportarDiarioParaExcel = async (projeto, diario) => {
     ws.getRow(currentRow).getCell(17).font = { bold: true, size: 12 };
     currentRow++;
 
-    // 2. Lógica de Blocos de Colaboradores (Chunks de 8)
     const maxCargos = 8;
     const colaboradores = diario.colaboradores || [];
     const chunkedCargos = [];
@@ -102,7 +98,6 @@ export const exportarDiarioParaExcel = async (projeto, diario) => {
       currentRow += 3;
     });
 
-    // 3. Descrições
     ws.addRow(["DESCRIÇÃO DOS SERVIÇOS", ...Array(17).fill("")]);
     ws.mergeCells(currentRow, 1, currentRow, 18);
     ws.getRow(currentRow).eachCell(c => applyStyle(c, 'cabecalho'));
@@ -116,7 +111,6 @@ export const exportarDiarioParaExcel = async (projeto, diario) => {
       currentRow++;
     });
 
-    // 4. Observações
     ws.addRow(["OBSERVAÇÕES", ...Array(17).fill("")]);
     ws.mergeCells(currentRow, 1, currentRow, 18);
     ws.getRow(currentRow).eachCell(c => applyStyle(c, 'cabecalho'));
