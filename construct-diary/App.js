@@ -9,6 +9,7 @@ import { NewProjectScreen } from './src/views/NewProjectScreen';
 import { ProjectDetailsScreen } from './src/views/ProjectDetailsScreen';
 import { NewDiaryScreen } from './src/views/NewDiaryScreen';
 import { ProjectFormScreen } from './src/views/ProjectFormScreen';
+import { ForgotPasswordScreen } from './src/views/ForgotPasswordScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         <Stack.Screen name="NewDiary" component={NewDiaryScreen} />
         <Stack.Screen name="ProjectFormScreen" component={ProjectFormScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} options={{ headerShown: false }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

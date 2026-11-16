@@ -50,7 +50,7 @@ export function LoginScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Linha com Lembrar de mim e Esqueceu a senha */}
+        {}
         <View style={styles.optionsRow}>
           <TouchableOpacity 
             style={styles.checkboxContainer} 
@@ -60,9 +60,9 @@ export function LoginScreen({ navigation }) {
             <Text style={styles.checkboxText}>Lembrar e-mail</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity>
-            <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+            <Text style={{ color: '#F47B20', textAlign: 'center', marginTop: 15 }}>Esqueceu a sua senha?</Text>
+            </TouchableOpacity>
         </View>
 
         {isLoading ? (
