@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDiaryViewModel } from '../viewmodels/useDiaryViewModel';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ColaboradorCard = ({ item, updateColaborador, removeColaborador }) => {
   const inputRef = useRef(null);
@@ -110,7 +111,7 @@ const FotoCard = ({ item, removeFunc }) => {
 };
 
 export function NewDiaryScreen({ route, navigation }) {
-  const { projeto, diario } = route.params || {}; // Recebe o projeto e o diário (se for edição)
+  const { projeto, diario } = route.params || {}; 
   
   const { 
     colaboradores, addColaborador, updateColaborador, removeColaborador,
@@ -118,19 +119,21 @@ export function NewDiaryScreen({ route, navigation }) {
     observacoes, addObservacao, updateObservacao, removeObservacao,
     fotos, addFoto, removeFoto,
     saveDiario, isLoading, isEditing
-  } = useDiaryViewModel(diario); // Passa o diário existente para o ViewModel
+  } = useDiaryViewModel(diario); 
 
   const dataAlvo = diario?.data ? new Date(diario.data + 'T00:00:00') : new Date();
   const dataFormatada = `${String(dataAlvo.getDate()).padStart(2, '0')}/${String(dataAlvo.getMonth() + 1).padStart(2, '0')}`;
 
   return (
+    
     <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>
           {isEditing ? `Editar Diário ${dataFormatada}` : `Diário de obra ${dataFormatada}`}
         </Text>
       </View>
-
+      </SafeAreaView>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Colaboradores</Text>

@@ -2,19 +2,21 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForgotPasswordViewModel } from '../viewmodels/useForgotPasswordViewModel';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function ForgotPasswordScreen({ navigation }) {
   const { email, setEmail, handleResetPassword, isLoading } = useForgotPasswordViewModel();
 
   return (
     <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Recuperar Senha</Text>
       </View>
-
+      </SafeAreaView>
       <View style={styles.content}>
         <Text style={styles.instructionText}>
           Informe o e-mail associado à sua conta para receber as instruções de redefinição de senha.

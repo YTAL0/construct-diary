@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProjectDetailsViewModel } from '../viewmodels/useProjectDetailsViewModel';
 import { exportarDiarioParaExcel } from '../services/excelService';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 export function ProjectDetailsScreen({ route, navigation }) {
   const { projeto } = route.params;
   const { diarios, isLoading, fetchDiarios } = useProjectDetailsViewModel(projeto.id);
@@ -21,7 +21,7 @@ export function ProjectDetailsScreen({ route, navigation }) {
 
     return (
       <View style={styles.diarioCard}>
-        {/* Ao clicar no card, abre a NewDiaryScreen para edição passando o projeto e o diário */}
+        {}
         <TouchableOpacity 
           style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }} 
           onPress={() => {
@@ -38,7 +38,7 @@ export function ProjectDetailsScreen({ route, navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* Botão de download do Excel continua intacto */}
+        {}
         <TouchableOpacity 
           style={{ padding: 10, backgroundColor: '#E8F5E9', borderRadius: 8 }}
           onPress={() => exportarDiarioParaExcel(projeto, item)}
@@ -51,13 +51,15 @@ export function ProjectDetailsScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {projeto.nome_projeto}
         </Text>
       </View>
+      </SafeAreaView>
 
-      {/* Condições de exibição: Carregando, Lista Vazia, ou Lista Cheia */}
+      {}
       {isLoading ? (
         <ActivityIndicator size="large" color="#F47B20" style={{ marginTop: 50 }} />
       ) : diarios.length === 0 ? (
@@ -77,7 +79,7 @@ export function ProjectDetailsScreen({ route, navigation }) {
         />
       )}
 
-      {/* Botão Flutuante (FAB) para criar novo diário */}
+      {}
       <TouchableOpacity 
         style={styles.fab} 
         onPress={() => navigation.navigate('NewDiary', { projeto })}

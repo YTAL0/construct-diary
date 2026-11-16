@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useProjectViewModel } from '../viewmodels/useProjectViewModel';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function NewProjectScreen({ navigation }) {
   const {
@@ -15,10 +16,11 @@ export function NewProjectScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>Projetos</Text>
       </View>
-
+    </SafeAreaView>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Dados do projeto</Text>
 

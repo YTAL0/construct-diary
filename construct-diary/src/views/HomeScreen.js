@@ -1,21 +1,15 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { useProjectViewModel } from '../viewmodels/useProjectViewModel';
-import { limparDiariosAntigos } from '../services/cleanupService';
 
 export function HomeScreen({ navigation }) {
   const { projetos, isLoading, fetchProjetos } = useProjectViewModel();
 
   useEffect(() => {
-
-const carregarDadosELimpar = async () => {
-      await limparDiariosAntigos();
-      fetchProjetos();
-    };
-
     const unsubscribe = navigation.addListener('focus', () => {
-      carregarDadosELimpar();
+      fetchProjetos();
     });
     return unsubscribe;
   }, [navigation]);
@@ -24,19 +18,6 @@ const carregarDadosELimpar = async () => {
     <TouchableOpacity 
       style={styles.folderContainer}
       onPress={() => navigation.navigate('ProjectDetails', { projeto: item })}
-      onLongPress={() => {
-        Alert.alert(
-          "Gerenciar Projeto",
-          `O que deseja fazer com "${item.nome_projeto}"?`,
-          [
-            { text: "Cancelar", style: "cancel" },
-            { 
-              text: "Editar Dados", 
-              onPress: () => navigation.navigate('ProjectFormScreen', { projeto: item }) 
-            }
-          ]
-        );
-      }}
     >
       <View style={styles.folderTab} />
       <View style={styles.folderBody}>
@@ -47,9 +28,12 @@ const carregarDadosELimpar = async () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Text style={styles.topBarTitle}>Projetos</Text>
-      </View>
+      {}
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
+        <View style={styles.topBar}>
+          <Text style={styles.topBarTitle}>Projetos</Text>
+        </View>
+      </SafeAreaView>
       
       <View style={styles.content}>
         {isLoading ? (
@@ -77,7 +61,12 @@ const carregarDadosELimpar = async () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  topBar: { height: 60, backgroundColor: '#F47B20', justifyContent: 'center', alignItems: 'center' },
+  topBar: { 
+    height: 60, 
+    backgroundColor: '#F47B20', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
   topBarTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
   content: { flex: 1, padding: 20 },
   emptyText: { textAlign: 'center', color: '#888', marginTop: 20 },

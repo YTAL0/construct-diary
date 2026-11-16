@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useProjectViewModel } from '../viewmodels/useProjectViewModel';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function ProjectFormScreen({ route, navigation }) {
-  const { projeto } = route.params || {}; // Se vier preenchido, é edição!
+  const { projeto } = route.params || {}; 
 
   const {
     engenheiro, setEngenheiro,
@@ -17,11 +18,13 @@ export function ProjectFormScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#F47B20' }}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>
           {isEditing ? 'Editar Projeto' : 'Novo Projeto'}
         </Text>
       </View>
+      </SafeAreaView>
 
       <ScrollView contentContainerStyle={styles.form}>
         <Text style={styles.label}>Nome do Projeto</Text>
