@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../services/supabase';
 
-// Recebe opcionalmente um projeto existente para edição
 export function useProjectViewModel(projetoExistente = null) {
   const [projetos, setProjetos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Inicializa os estados com os dados existentes (se houver) ou vazios
   const [engenheiro, setEngenheiro] = useState(projetoExistente?.engenheiro || '');
   const [empresa, setEmpresa] = useState(projetoExistente?.empresa || '');
   const [nomeProjeto, setNomeProjeto] = useState(projetoExistente?.nome_projeto || '');
@@ -42,7 +40,6 @@ export function useProjectViewModel(projetoExistente = null) {
     let error;
 
     if (isEditing) {
-      // Se estiver a editar, faz UPDATE
       const res = await supabase
         .from('projetos')
         .update({
