@@ -15,7 +15,8 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.ytal0.constructdiary"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -23,6 +24,12 @@
     "plugins": [
       "expo-sharing",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9c0bd536-c87b-4fdd-8072-81a99e507d10"
+      }
+    },
+    "owner": "ytal0"
   }
 }
