@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  Image, 
+  StyleSheet, 
+  ActivityIndicator, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthViewModel } from '../viewmodels/useAuthViewModel';
 
@@ -15,81 +26,92 @@ export function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: '#FFF' }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <View style={styles.topBar} />
 
-      <View style={styles.content}>
-        <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.title}>Login</Text>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.title}>Login</Text>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>E-mail</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="E-mail" 
-            value={email} 
-            onChangeText={setEmail} 
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Senha</Text>
-          <View style={styles.passwordRow}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>E-mail</Text>
             <TextInput 
-              style={styles.passwordInput} 
-              placeholder="Senha" 
-              value={password} 
-              onChangeText={setPassword} 
-              secureTextEntry={!showPassword} 
+              style={styles.input} 
+              placeholder="E-mail" 
+              value={email} 
+              onChangeText={setEmail} 
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#F47B20" />
-            </TouchableOpacity>
           </View>
-        </View>
 
-        {}
-        <View style={styles.optionsRow}>
-          <TouchableOpacity 
-            style={styles.checkboxContainer} 
-            onPress={() => setRememberMe(!rememberMe)}
-          >
-            <Ionicons name={rememberMe ? "checkbox" : "square-outline"} size={22} color="#F47B20" />
-            <Text style={styles.checkboxText}>Lembrar e-mail</Text>
-          </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Senha</Text>
+            <View style={styles.passwordRow}>
+              <TextInput 
+                style={styles.passwordInput} 
+                placeholder="Senha" 
+                value={password} 
+                onChangeText={setPassword} 
+                secureTextEntry={!showPassword} 
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#F47B20" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.optionsRow}>
+            <TouchableOpacity 
+              style={styles.checkboxContainer} 
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <Ionicons name={rememberMe ? "checkbox" : "square-outline"} size={22} color="#F47B20" />
+              <Text style={styles.checkboxText}>Lembrar e-mail</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPasswordScreen')}>
-            <Text style={{ color: '#F47B20', textAlign: 'center', marginTop: 15 }}>Esqueceu a sua senha?</Text>
+              <Text style={{ color: '#F47B20', textAlign: 'center', marginTop: 15 }}>Esqueceu a sua senha?</Text>
             </TouchableOpacity>
-        </View>
+          </View>
 
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#F47B20" />
-        ) : (
-          <TouchableOpacity style={styles.button} onPress={() => handleSignIn(() => navigation.replace('Home'))}>
-            <Text style={styles.buttonText}>LOGIN</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#F47B20" />
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={() => handleSignIn(() => navigation.replace('Home'))}>
+              <Text style={styles.buttonText}>LOGIN</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.footerText}>
+              Não tem conta? <Text style={styles.link}>Cadastre-se</Text>
+            </Text>
           </TouchableOpacity>
-        )}
-
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.footerText}>
-            Não tem conta? <Text style={styles.link}>Cadastre-se</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+        </View>
+      </ScrollView>
 
       <View style={styles.bottomBar} />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF', justifyContent: 'space-between' },
   topBar: { height: 60, backgroundColor: '#F47B20' },
   bottomBar: { height: 60, backgroundColor: '#F47B20' },
-  content: { flex: 1, paddingHorizontal: 30, justifyContent: 'center' },
+  scrollContent: { 
+    flexGrow: 1, 
+    justifyContent: 'center' 
+  },
+  content: { paddingHorizontal: 30, paddingVertical: 20 },
   logo: { width: 100, height: 100, alignSelf: 'center', marginBottom: 20 },
   title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 30 },
   inputContainer: { marginBottom: 15, borderWidth: 1, borderColor: '#F47B20', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 5 },
@@ -100,7 +122,6 @@ const styles = StyleSheet.create({
   optionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   checkboxContainer: { flexDirection: 'row', alignItems: 'center' },
   checkboxText: { marginLeft: 8, fontSize: 14, color: '#000' },
-  forgotPasswordText: { color: '#000', textDecorationLine: 'underline', fontSize: 12 },
   
   button: { backgroundColor: '#F47B20', width: '100%', paddingVertical: 15, borderRadius: 8, alignItems: 'center', marginBottom: 20 },
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
