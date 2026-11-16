@@ -1,7 +1,8 @@
 <p align="center">
   <img src="construct-diary/assets/image.png" alt="Logo do Projeto" width="220" style="border-radius: 100%;" />
 </p>
-# Diário de Obra - Aplicativo Mobile
+
+# Diary Construct
 
 Aplicativo móvel multiplataforma desenvolvido em **React Native** com **Expo** e integrado ao **Supabase** (Backend-as-a-Service), projetado especificamente para engenheiros, mestres de obras e equipes de construção civil registrarem o andamento diário de suas obras de forma simples, organizada e totalmente otimizada para o plano gratuito.
 
