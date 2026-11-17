@@ -118,11 +118,10 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 12, color: '#F47B20', marginBottom: -5 },
   input: { height: 40, fontSize: 16 },
   passwordRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  passwordInput: { flex: 1, height: 40, fontSize: 16 },
+  passwordInput: { flex: 1, height: 40, fontSize: 16, color: '#000' },
   optionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   checkboxContainer: { flexDirection: 'row', alignItems: 'center' },
   checkboxText: { marginLeft: 8, fontSize: 14, color: '#000' },
-  
   button: { backgroundColor: '#F47B20', width: '100%', paddingVertical: 15, borderRadius: 8, alignItems: 'center', marginBottom: 20 },
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   footerText: { textAlign: 'center', color: '#000', fontSize: 14, marginTop: 10 },
